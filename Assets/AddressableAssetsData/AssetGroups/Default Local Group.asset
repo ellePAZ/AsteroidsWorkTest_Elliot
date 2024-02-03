@@ -20,12 +20,14 @@ MonoBehaviour:
   - m_GUID: ae2fc5bab321d45449bb194892a41308
     m_Address: Assets/Prefabs/PlayerShip.prefab
     m_ReadOnly: 0
-    m_SerializedLabels: []
+    m_SerializedLabels:
+    - default
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: fa897f63a5df33a4cbbfc8e62532bbab
     m_Address: Assets/Prefabs/Asteroids/MediumAsteroid.prefab
     m_ReadOnly: 0
-    m_SerializedLabels: []
+    m_SerializedLabels:
+    - default
     FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: f7511999fa563c147b839ea8b3f1204f, type: 2}
