@@ -1,4 +1,4 @@
-﻿internal interface IHealthSubtractable
+﻿public interface IHealthSubtractable
 {
     void RemoveHealth();
 }

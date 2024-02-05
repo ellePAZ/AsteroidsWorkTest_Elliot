@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
@@ -9,22 +10,25 @@ namespace Spawning
     {
         const byte MAX_ASTEROIDS = 128;
         const byte MIN_SPAWN_POINT = 1;
-        const string ASSET_STRING = "Assets/Prefabs/Asteroids/MediumAsteroid.prefab";
 
+        string _assetsLabel;
         int _noSpawnRadius;
 
-        GameObject _asteroidReference;
+        GameObject _smallAsteroidReference;
+        GameObject _mediumAsteroidReference;
+        GameObject _bigAsteroidReference;
 
-        GameObject[] _asteroidObjects = new GameObject[MAX_ASTEROIDS];
         byte _asteroidsCount;
 
         Action onAssetsLoaded;
         Action IAddressableLoader.OnAssetsLoaded { get => onAssetsLoaded; }
 
-        float _delay = 0;
+        Action onLevelFinished;
 
         public AsteroidSpawner(Action onLevelFinishedCallback)
         {
+            _assetsLabel = "Asteroid";
+            onLevelFinished = onLevelFinishedCallback;
             _noSpawnRadius = 2;
             _asteroidsCount = 0;
         }
@@ -32,27 +36,38 @@ namespace Spawning
         public void LoadAddressables(Action callback)
         {
             onAssetsLoaded = callback;
-            Addressables.LoadAssetAsync<GameObject>(ASSET_STRING).Completed += OnAddressableAssetLoaded;
+            Addressables.LoadAssetsAsync<GameObject>(_assetsLabel, ProcessAddressable).Completed += OnAddressableAssetLoaded;
         }
 
-        void OnAddressableAssetLoaded(AsyncOperationHandle<GameObject> handle)
+        void ProcessAddressable(GameObject gameObject)
+        {
+            switch (gameObject.name)
+            {
+                case "SmallAsteroid":
+                    _smallAsteroidReference = gameObject;
+                    break;
+                case "MediumAsteroid":
+                    _mediumAsteroidReference = gameObject;
+                    break;
+                case "BigAsteroid":
+                    _bigAsteroidReference = gameObject;
+                    break;
+            }
+        }
+
+        void OnAddressableAssetLoaded(AsyncOperationHandle<IList<GameObject>> handle)
         {
             if (handle.Status == AsyncOperationStatus.Succeeded)
-            {
-                _asteroidReference = handle.Result;
                 onAssetsLoaded?.Invoke();
-            }
             else
-            {
                 Debug.LogError(handle.Result.ToString());
-            }
         }
 
         //TODO: Add unit test to make sure that creating and destroying keeps count at proper amount
         //TODO: Maybe add unit test to make sure that asteroids don't spawn in the players area
         public void Spawn()
         {
-            if (_asteroidReference != null)
+            if (_bigAsteroidReference != null)
             {
                 Debug.Assert(_asteroidsCount < MAX_ASTEROIDS, "Max asteroid count reached, something went wrong");
 
@@ -69,7 +84,11 @@ namespace Spawning
                     Debug.Log($"New distance from center: {Vector2.Distance(center, spawnPos)}");
                 }
 
-                _asteroidObjects[_asteroidsCount] = GameObject.Instantiate(_asteroidReference, spawnPos, Quaternion.identity);
+                var asteroidObject = GameObject.Instantiate(_bigAsteroidReference, spawnPos, Quaternion.identity);
+                var deathObservable = asteroidObject.GetComponent<IDeathObservable>();
+                Debug.Assert(deathObservable != null, "There is no death observable on the asteroid prefab, please fix");
+                deathObservable.Subscribe(UnSpawn);
+
                 _asteroidsCount++;
             }
         }
@@ -78,13 +97,12 @@ namespace Spawning
         {
             Debug.Assert(_asteroidsCount > 0, "You are trying to destroy an asteroid that doesn't exist");
 
-            GameObject.Destroy(_asteroidObjects[_asteroidsCount - 1]);
             _asteroidsCount--;
-        }
 
-        public void Update()
-        {
-            throw new NotImplementedException();
+            if (_asteroidsCount == 0)
+            {
+                onLevelFinished?.Invoke();
+            }
         }
     }
 }

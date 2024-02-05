@@ -1,28 +1,33 @@
 using Spawning;
-using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
-using UnityEditor;
 using UnityEngine;
 
 public class Game : MonoBehaviour
 {
     List<IAddressableLoader> _addressableLoaders;
     ISpawner _asteroidSpawner;
+
     ISpawner _shipSpawner;
+    IUpdateable _shipSpawnerUpdate;
 
+    [Header("Component references")]
+    [SerializeField] PlayerLivesIndicator _playerLivesIndicator;
     [SerializeField] WaveData[] _waveData;
-    [SerializeField] float _playerSpawnInterval;
 
+    [Header("Variables")]
+    [SerializeField] float _playerSpawnInterval;
     [SerializeField] float _playerSpawnCircleRadius;
 
     byte _waveCount;
     byte _loadedAssets;
 
+    short _playerLives;
+
     private void Start()
     {
         _loadedAssets = 0;
         _waveCount = 0;
+        _playerLives = 3;
 
         _addressableLoaders = new();
 
@@ -30,11 +35,20 @@ public class Game : MonoBehaviour
         _addressableLoaders.Add(asteroidSpawner);
         _asteroidSpawner = asteroidSpawner;
 
-        ShipSpawner shipSpawner = new ShipSpawner(PlayerHealthLoss);
+        ShipSpawner shipSpawner = new ShipSpawner(PlayerHealthLoss, 1f);
         _addressableLoaders.Add(shipSpawner);
         _shipSpawner = shipSpawner;
+        _shipSpawnerUpdate = shipSpawner;
 
         StartLoadingAssets();
+
+        //TODO: Change this to not be a magic number
+        _playerLivesIndicator.SetupLives(3);
+    }
+
+    private void Update()
+    {
+        _shipSpawnerUpdate.Update(Time.deltaTime);
     }
 
 #if UNITY_EDITOR
@@ -73,11 +87,13 @@ public class Game : MonoBehaviour
     void LevelFinished()
     {
         //TODO: Load next level
+        _waveCount++;
         _shipSpawner.UnSpawn();
 
         if (_waveCount == _waveData.Length)
         {
             // Win State
+            Debug.Log("You win!");
         }
         else
         {
@@ -85,34 +101,20 @@ public class Game : MonoBehaviour
         }
     }
 
-    void PlayerHealthLoss(int newHealth)
+    void PlayerHealthLoss()
     {
-        //TODO: Tell the UI that the player lost health
-        //      Tell the ShipSpawner to unspawn the player
-        //      Handle game over if player has <= 0 health
+        _playerLives--;
+
+        _playerLivesIndicator.RemoveLife();
         _shipSpawner.UnSpawn();
 
-        if (newHealth > 0)
+        if (_playerLives > 0)
         {
-            StartCoroutine(CheckForShipSpawn(_playerSpawnInterval));
+            _shipSpawner.Spawn();
         }
         else
         {
             // Game Over
-        }
-    }
-
-    IEnumerator CheckForShipSpawn(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-
-        if (Physics2D.OverlapCircle(Vector2.zero, _playerSpawnCircleRadius) != null)
-        {
-            StartCoroutine(CheckForShipSpawn(delay));
-        }
-        else
-        {
-            _shipSpawner.Spawn();
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿internal interface IHealthAddable
+﻿public interface IHealthAddable
 {
     public void AddHealth();
 }

@@ -1,6 +1,8 @@
+using System;
+
 namespace Spawning
 {
-    internal interface ISpawner
+    public interface ISpawner
     {
         void Spawn();
 
