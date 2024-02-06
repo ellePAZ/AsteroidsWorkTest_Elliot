@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25cae9135841f2942b9f3dffcde6d990, type: 3}
   m_Name: Wave_1
   m_EditorClassIdentifier: 
-  asteroidCount: 3
+  asteroidCount: 1
