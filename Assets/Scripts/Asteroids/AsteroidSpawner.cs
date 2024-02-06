@@ -1,3 +1,4 @@
+using Enemies;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,10 +7,11 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Spawning
 {
-    public class AsteroidSpawner : ISpawner, IAddressableLoader
+    public class AsteroidSpawner : IAsteroidSpawner, IAddressableLoader
     {
-        const byte MAX_ASTEROIDS = 128;
         const byte MIN_SPAWN_POINT = 1;
+        const byte BIG_ASTEROID_SPLIT_COUNT = 2;
+        const byte MEDIUM_ASTEROID_SPLIT_COUNT = 3;
 
         string _assetsLabel;
         int _noSpawnRadius;
@@ -41,15 +43,18 @@ namespace Spawning
 
         void ProcessAddressable(GameObject gameObject)
         {
-            switch (gameObject.name)
+            var asteroidHealth = gameObject.GetComponent<AsteroidHealth>();
+            Debug.Assert(asteroidHealth != null, "Asteroid health is null, please fix");
+
+            switch (asteroidHealth.AsteroidType)
             {
-                case "SmallAsteroid":
+                case AsteroidType.Small:
                     _smallAsteroidReference = gameObject;
                     break;
-                case "MediumAsteroid":
+                case AsteroidType.Medium:
                     _mediumAsteroidReference = gameObject;
                     break;
-                case "BigAsteroid":
+                case AsteroidType.Large:
                     _bigAsteroidReference = gameObject;
                     break;
             }
@@ -65,17 +70,43 @@ namespace Spawning
 
         //TODO: Add unit test to make sure that creating and destroying keeps count at proper amount
         //TODO: Maybe add unit test to make sure that asteroids don't spawn in the players area
-        public void Spawn()
+        public void Spawn(AsteroidType asteroidType, Vector3? position)
         {
-            if (_bigAsteroidReference != null)
+            GameObject asteroidReference = null;
+            switch (asteroidType)
             {
-                Debug.Assert(_asteroidsCount < MAX_ASTEROIDS, "Max asteroid count reached, something went wrong");
+                case AsteroidType.Small:
+                    asteroidReference = _smallAsteroidReference;
+                    break;
+                case AsteroidType.Medium:
+                    asteroidReference = _mediumAsteroidReference;
+                    break;
+                case AsteroidType.Large:
+                    asteroidReference = _bigAsteroidReference;
+                    break;
+            }
 
+            if (asteroidType == AsteroidType.Medium)
+                asteroidReference = _mediumAsteroidReference;
+            else if (asteroidType == AsteroidType.Small)
+                asteroidReference = _smallAsteroidReference;
+
+            if (asteroidReference != null)
+            {
                 Camera camera = Camera.main;
 
-                Vector2 spawnPos = new Vector2(UnityEngine.Random.Range(MIN_SPAWN_POINT, camera.pixelWidth - 1), UnityEngine.Random.Range(MIN_SPAWN_POINT, camera.pixelHeight));
-                spawnPos = camera.ScreenToWorldPoint(spawnPos);
+                Vector3 spawnPos;
+                if (position != null)
+                {
+                    spawnPos = position.Value;
+                }
+                else
+                {
+                    spawnPos = new Vector2(UnityEngine.Random.Range(MIN_SPAWN_POINT, camera.pixelWidth - 1), UnityEngine.Random.Range(MIN_SPAWN_POINT, camera.pixelHeight));
+                    spawnPos = camera.ScreenToWorldPoint(spawnPos);
+                }
 
+                spawnPos.z = 0;
                 Vector2 center = camera.ScreenToWorldPoint(new Vector2(camera.pixelWidth / 2, camera.pixelHeight / 2));
                 if (Vector2.Distance(center, spawnPos) < _noSpawnRadius)
                 {
@@ -84,7 +115,7 @@ namespace Spawning
                     Debug.Log($"New distance from center: {Vector2.Distance(center, spawnPos)}");
                 }
 
-                var asteroidObject = GameObject.Instantiate(_bigAsteroidReference, spawnPos, Quaternion.identity);
+                var asteroidObject = GameObject.Instantiate(asteroidReference, spawnPos, Quaternion.identity);
                 var deathObservable = asteroidObject.GetComponent<IDeathObservable>();
                 Debug.Assert(deathObservable != null, "There is no death observable on the asteroid prefab, please fix");
                 deathObservable.Subscribe(UnSpawn);
@@ -93,16 +124,32 @@ namespace Spawning
             }
         }
 
-        public void UnSpawn()
+        public void UnSpawn(object context)
         {
             Debug.Assert(_asteroidsCount > 0, "You are trying to destroy an asteroid that doesn't exist");
 
             _asteroidsCount--;
 
-            if (_asteroidsCount == 0)
+            if (context != null)
             {
-                onLevelFinished?.Invoke();
+                AsteroidHealth asteroidHealth = (AsteroidHealth)context;
+                AsteroidType asteroidType = asteroidHealth.AsteroidType;
+
+                if (asteroidType != AsteroidType.Small)
+                {
+                    var asteroidPosition = asteroidHealth.gameObject.transform.position;
+                    if (asteroidType == AsteroidType.Large)
+                        for (byte i = 0; i < BIG_ASTEROID_SPLIT_COUNT; i++)
+                            Spawn(AsteroidType.Medium, asteroidPosition);
+
+                    if (asteroidType == AsteroidType.Medium)
+                        for (byte i = 0; i < MEDIUM_ASTEROID_SPLIT_COUNT; i++)
+                            Spawn(AsteroidType.Small, asteroidPosition);
+                }
             }
+
+            if (_asteroidsCount == 0)
+                onLevelFinished?.Invoke();
         }
     }
 }

@@ -1,22 +1,35 @@
 using Spawning;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class Game : MonoBehaviour
 {
+    private enum GameState
+    {
+        Loading,
+        Start,
+        Playing,
+        NextRound,
+        GameOver
+    }
+
     List<IAddressableLoader> _addressableLoaders;
-    ISpawner _asteroidSpawner;
+    IAsteroidSpawner _asteroidSpawner;
 
     ISpawner _shipSpawner;
     IUpdateable _shipSpawnerUpdate;
 
     [Header("Component references")]
     [SerializeField] PlayerLivesIndicator _playerLivesIndicator;
+    [SerializeField] GameStateUI _gameStateUI;
     [SerializeField] WaveData[] _waveData;
 
     [Header("Variables")]
     [SerializeField] float _playerSpawnInterval;
     [SerializeField] float _playerSpawnCircleRadius;
+
+    GameState _state;
 
     byte _waveCount;
     byte _loadedAssets;
@@ -25,6 +38,9 @@ public class Game : MonoBehaviour
 
     private void Start()
     {
+        _state = GameState.Start;
+        _gameStateUI.SetStartGameText();
+
         _loadedAssets = 0;
         _waveCount = 0;
         _playerLives = 3;
@@ -44,11 +60,35 @@ public class Game : MonoBehaviour
 
         //TODO: Change this to not be a magic number
         _playerLivesIndicator.SetupLives(3);
+        Time.timeScale = 0f;
     }
 
     private void Update()
     {
         _shipSpawnerUpdate.Update(Time.deltaTime);
+
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            switch (_state)
+            {
+                case GameState.Start:
+                case GameState.NextRound:
+                    {
+                        _state = GameState.Playing;
+                        _gameStateUI.ToggleText(false);
+                        PlayGame();
+                        NextLevel();
+                    }
+                    break;
+                case GameState.GameOver:
+                    {
+                        _gameStateUI.SetStartGameText();
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }        
     }
 
 #if UNITY_EDITOR
@@ -61,9 +101,7 @@ public class Game : MonoBehaviour
     void StartLoadingAssets()
     {
         foreach (var loader in _addressableLoaders)
-        {
             loader.LoadAddressables(AssetLoaded);
-        }
     }
 
     void AssetLoaded()
@@ -71,15 +109,14 @@ public class Game : MonoBehaviour
         _loadedAssets++;
         if (_loadedAssets == _addressableLoaders.Count)
         {
-            NextLevel();
-            Debug.Log("Game Starting");
+            Debug.Log("Game Loaded");
         }
     }
 
     void NextLevel()
     {
         for (int i = 0; i < _waveData[_waveCount].asteroidCount; i++)
-            _asteroidSpawner.Spawn();
+            _asteroidSpawner.Spawn(Enemies.AsteroidType.Small, null);
 
         _shipSpawner.Spawn();
     }
@@ -93,15 +130,21 @@ public class Game : MonoBehaviour
         if (_waveCount == _waveData.Length)
         {
             // Win State
+            _gameStateUI.SetWinText();
             Debug.Log("You win!");
         }
         else
         {
-            NextLevel();
+            PauseGame();
+            _gameStateUI.SetNextRoundText();
+            _state = GameState.NextRound;
         }
     }
 
-    void PlayerHealthLoss()
+    void PauseGame() => Time.timeScale = 0f;
+    void PlayGame() => Time.timeScale = 1f;
+
+    void PlayerHealthLoss(object context)
     {
         _playerLives--;
 

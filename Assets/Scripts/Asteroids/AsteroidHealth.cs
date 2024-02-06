@@ -5,14 +5,24 @@ using UnityEngine;
 
 namespace Enemies
 {
+    public enum AsteroidType
+    {
+        Small,
+        Medium,
+        Large,
+    }
+
     public class AsteroidHealth : MonoBehaviour, IHealthSubtractable, IDeathObservable
     {
+        [SerializeField] AsteroidType _asteroidType;
+        public AsteroidType AsteroidType => _asteroidType;
+
         int _health = 1;
 
-        Action onKilled;
-        Action IDeathObservable.OnKilled { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        Action<object> onKilled;
+        Action<object> IDeathObservable.OnKilled { get => onKilled; set => onKilled = value; }
 
-        public void Subscribe(Action callback) => onKilled += callback;
+        public void Subscribe(Action<object> callback) => onKilled += callback;
 
         void IHealthSubtractable.RemoveHealth()
         {
@@ -20,7 +30,7 @@ namespace Enemies
 
             if (_health <= 0)
             {
-                onKilled?.Invoke();
+                onKilled?.Invoke(this);
                 Destroy(gameObject);
             }
         }

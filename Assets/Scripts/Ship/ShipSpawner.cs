@@ -16,7 +16,7 @@ public class ShipSpawner : ISpawner, IAddressableLoader, IUpdateable
     Action _onAssetsLoaded;
     Action IAddressableLoader.OnAssetsLoaded { get => _onAssetsLoaded; }
 
-    Action _playerKilledCallback;
+    Action<object> _playerKilledCallback;
 
     bool _trySpawnPlayer;
     float _currentTimer;
@@ -24,9 +24,9 @@ public class ShipSpawner : ISpawner, IAddressableLoader, IUpdateable
 
     int _playerSpawnRadius;
 
-    public ShipSpawner(Action onPlayerHealthchanged, float spawnInterval)
+    public ShipSpawner(Action<object> onPlayerDeathCallback, float spawnInterval)
     {
-        _playerKilledCallback = onPlayerHealthchanged;
+        _playerKilledCallback = onPlayerDeathCallback;
         _spawnInterval = spawnInterval;
         _currentTimer = 0f;
         _playerSpawnRadius = 2;

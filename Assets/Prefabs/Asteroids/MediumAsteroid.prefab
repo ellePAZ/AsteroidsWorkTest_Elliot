@@ -199,6 +199,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 86f8014a8d5aef14094f0fa1dcdff81f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _asteroidType: 1
 --- !u!114 &-4110557202397716600
 MonoBehaviour:
   m_ObjectHideFlags: 0

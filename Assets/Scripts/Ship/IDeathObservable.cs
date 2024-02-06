@@ -1,10 +1,10 @@
 ﻿public interface IDeathObservable
 {
-    protected System.Action OnKilled
+    System.Action<object> OnKilled
     {
         get;
         set;
     }
 
-    public void Subscribe(System.Action callback);
+    public void Subscribe(System.Action<object> callback);
 }
