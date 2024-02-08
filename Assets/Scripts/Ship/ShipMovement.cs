@@ -38,9 +38,7 @@ namespace Ship
 
 		private void Start()
 		{
-            _minBounds = Camera.main.ScreenToWorldPoint(Vector3.zero);
-            _maxBounds = Camera.main.ScreenToWorldPoint(new Vector3(Camera.main.pixelWidth, Camera.main.pixelHeight));
-			
+			MovementUtilities.GetMinMaxBounds(out _minBounds, out _maxBounds);			
 			_moveForce = Vector2.zero;
         }
 

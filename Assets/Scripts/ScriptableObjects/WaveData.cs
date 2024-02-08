@@ -6,5 +6,8 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "WaveData", menuName = "Asteroids/WaveData")]
 public class WaveData : ScriptableObject
 {
-    public int asteroidCount;
+    public byte initialAsteroidCount;
+    public int asteroidIncreaseInterval;
+    public float initialShipSpawnInterval;
+    public float shipSpawnIntervalDecrease;
 }

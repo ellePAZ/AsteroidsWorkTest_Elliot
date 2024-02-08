@@ -17,8 +17,6 @@ namespace Enemies
         [SerializeField] AsteroidType _asteroidType;
         public AsteroidType AsteroidType => _asteroidType;
 
-        int _health = 1;
-
         Action<object> onKilled;
         Action<object> IDeathObservable.OnKilled { get => onKilled; set => onKilled = value; }
 
@@ -26,13 +24,7 @@ namespace Enemies
 
         void IHealthSubtractable.RemoveHealth()
         {
-            _health -= 1;
-
-            if (_health <= 0)
-            {
-                onKilled?.Invoke(this);
-                Destroy(gameObject);
-            }
+            onKilled?.Invoke(this);
         }
     }
 }

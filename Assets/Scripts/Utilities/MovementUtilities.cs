@@ -6,6 +6,12 @@ namespace Utilities
 {
     public static class MovementUtilities
     {
+        public static void GetMinMaxBounds(out Vector3 minBounds, out Vector3 maxBounds)
+        {
+            minBounds = Camera.main.ScreenToWorldPoint(Vector3.zero);
+            maxBounds = Camera.main.ScreenToWorldPoint(new Vector3(Camera.main.pixelWidth, Camera.main.pixelHeight));
+        }
+
         public static Vector3 GetScreenWrapPosition(Vector3 minBounds,  Vector3 maxBounds, Transform transform)
         {
             Vector3 position = transform.position;

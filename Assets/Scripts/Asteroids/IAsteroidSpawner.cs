@@ -4,5 +4,7 @@
     {
         void Spawn(Enemies.AsteroidType asteroidType, UnityEngine.Vector3? position);
         void UnSpawn(object asteroidType);
+
+        public void Reset();
     }
 }

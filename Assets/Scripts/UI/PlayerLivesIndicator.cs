@@ -5,28 +5,31 @@ using UnityEngine;
 public class PlayerLivesIndicator : MonoBehaviour
 {
     [SerializeField] GameObject _playerLifePrefab;
-    [SerializeField] int _initialLivesCount = 10;
+    [SerializeField] int _initialLivesCapacity = 10;
 
     List<GameObject> _playerLivesList;
 
     int _currentLivesCount;
 
-    public void SetupLives(int count)
+    private void Awake()
     {
-        _currentLivesCount = count;
+        _playerLivesList = new List<GameObject>(_initialLivesCapacity);
 
-        _playerLivesList = new List<GameObject>(_initialLivesCount);
-
-        for (int i = 0; i < _initialLivesCount; i++)
+        for (int i = 0; i < _initialLivesCapacity; i++)
         {
             var newLife = Instantiate(_playerLifePrefab, transform);
             _playerLivesList.Add(newLife);
-            
-            if (i > _currentLivesCount - 1)
-            {
-                newLife.SetActive(false);
-            }
+
+            _playerLivesList[i].gameObject.SetActive(false);
         }
+    }
+
+    public void SetLives(int count)
+    {
+        _currentLivesCount = count;
+
+        for (int i = 0; i < count; i++)
+            _playerLivesList[i].SetActive(true);
     }
 
     public void AddLife()

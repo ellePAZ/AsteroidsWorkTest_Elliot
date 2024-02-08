@@ -13,6 +13,8 @@ public class ShipSpawner : ISpawner, IAddressableLoader, IUpdateable
     GameObject _shipReference;
     GameObject _ship;
 
+    public GameObject ship => _ship;
+
     Action _onAssetsLoaded;
     Action IAddressableLoader.OnAssetsLoaded { get => _onAssetsLoaded; }
 

@@ -1,20 +1,27 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Utilities;
 
 public class Bullet : MonoBehaviour
 {
     [SerializeField] float _velocity;
+    [SerializeField] float _lifeTime;
+
+    Vector3 _minBounds;
+    Vector3 _maxBounds;
 
     private void Start()
     {
-        Invoke("TimedOut", 1.5f);
+        Invoke("TimedOut", _lifeTime);
+        MovementUtilities.GetMinMaxBounds(out _minBounds, out _maxBounds);
     }
 
     // Update is called once per frame
-    void FixedUpdate()
+    void Update()
     {
         transform.position += transform.up * _velocity * Time.deltaTime;
+        transform.position = MovementUtilities.GetScreenWrapPosition(_minBounds, _maxBounds, transform);
     }
 
     void TimedOut()

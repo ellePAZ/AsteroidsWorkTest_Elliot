@@ -1,5 +1,6 @@
 using UnityEngine;
 using Utilities;
+using static UnityEditor.FilePathAttribute;
 
 namespace Enemies
 {
@@ -16,11 +17,12 @@ namespace Enemies
 
         private void Start()
         {
-            _minBounds = Camera.main.ScreenToWorldPoint(Vector3.zero);
-            _maxBounds = Camera.main.ScreenToWorldPoint(new Vector3(Camera.main.pixelWidth, Camera.main.pixelHeight));
+            MovementUtilities.GetMinMaxBounds(out _minBounds, out _maxBounds);
 
             _direction = Random.insideUnitCircle.normalized;
-            _speed = _maxSpeed/*Random.Range(_minSpeed, _maxSpeed)*/;
+            _speed = Random.Range(_minSpeed, _maxSpeed);
+
+            transform.rotation = Quaternion.LookRotation(Vector3.forward, _direction);
         }
 
         private void Update()
