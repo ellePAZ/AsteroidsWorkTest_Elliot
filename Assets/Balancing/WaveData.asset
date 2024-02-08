@@ -12,4 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25cae9135841f2942b9f3dffcde6d990, type: 3}
   m_Name: WaveData
   m_EditorClassIdentifier: 
-  asteroidCount: 1
+  initialAsteroidCount: 4
+  asteroidIncreaseInterval: 2
+  initialShipSpawnInterval: 10
+  shipSpawnIntervalDecrease: 0.02

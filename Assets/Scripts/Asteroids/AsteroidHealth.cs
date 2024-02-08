@@ -5,17 +5,20 @@ using UnityEngine;
 
 namespace Enemies
 {
-    public enum AsteroidType
+    public enum EnemyType
     {
-        Small,
-        Medium,
-        Large,
+        None,
+        SmallAsteroid,
+        MediumAsteroid,
+        LargeAsteroid,
+        Saucer,
+        Count,
     }
 
     public class AsteroidHealth : MonoBehaviour, IHealthSubtractable, IDeathObservable
     {
-        [SerializeField] AsteroidType _asteroidType;
-        public AsteroidType AsteroidType => _asteroidType;
+        [SerializeField] EnemyType _asteroidType;
+        public EnemyType AsteroidType => _asteroidType;
 
         Action<object> onKilled;
         Action<object> IDeathObservable.OnKilled { get => onKilled; set => onKilled = value; }

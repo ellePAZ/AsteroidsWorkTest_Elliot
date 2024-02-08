@@ -1,6 +1,7 @@
 using Enemies;
 using Spawning;
 using System.Collections.Generic;
+using System.Threading;
 using UI;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -17,7 +18,7 @@ public class Game : MonoBehaviour
 	}
 
 	List<IAddressableLoader> _addressableLoaders;
-	IAsteroidSpawner _asteroidSpawner;
+	IEnemySpawner _asteroidSpawner;
 
 	ISpawner _shipSpawner;
 	IUpdateable _shipSpawnerUpdate;
@@ -37,7 +38,7 @@ public class Game : MonoBehaviour
 	[Header("Variables")]
 	[SerializeField] float _playerSpawnInterval;
 	[SerializeField] float _playerSpawnCircleRadius;
-	[SerializeField] uint _scorePerExtraLife;
+	[SerializeField] int _scorePerExtraLife;
 	[SerializeField] byte _playerStartingLives;
 
 	GameState _state;
@@ -45,8 +46,9 @@ public class Game : MonoBehaviour
 	byte _asteroidsCount;
 	byte _waveCount;
 	byte _loadedAssets;
-
 	short _playerLives;
+	float _saucerSpawnTimer;
+	int _scoreToNextLife;
 
     private void OnEnable()
     {
@@ -69,10 +71,12 @@ public class Game : MonoBehaviour
 		_asteroidsCount = _waveData.initialAsteroidCount;
 		_waveCount = 0;
 		_playerLives = 3;
+		_saucerSpawnTimer = 0f;
+		_scoreToNextLife = _scorePerExtraLife;
 
 		_addressableLoaders = new();
 
-		AsteroidSpawner asteroidSpawner = new AsteroidSpawner(LevelFinished, AsteroidDestroyed);
+		EnemySpawner asteroidSpawner = new EnemySpawner(LevelFinished, AsteroidDestroyed);
 		_addressableLoaders.Add(asteroidSpawner);
 		_asteroidSpawner = asteroidSpawner;
 
@@ -92,8 +96,11 @@ public class Game : MonoBehaviour
 	private void Update()
 	{
 		_shipSpawnerUpdate.Update(Time.deltaTime);
-		
-		if (_state == GameState.Start || _state == GameState.NextRound) 
+
+        if (Input.GetKeyDown(KeyCode.S))
+            _asteroidSpawner.Spawn(EnemyType.Saucer, null, false);
+
+        if (_state == GameState.Start || _state == GameState.NextRound) 
 		{
 			if (_nextRoundAction.WasPressedThisFrame())
 			{
@@ -117,6 +124,16 @@ public class Game : MonoBehaviour
 				_waveCount = 0;
 
 				_state = GameState.Start;
+			}
+		}
+
+		if (_state == GameState.Playing)
+		{
+			_saucerSpawnTimer += Time.deltaTime;
+			if (_saucerSpawnTimer > _waveData.initialShipSpawnInterval)
+			{
+				_asteroidSpawner.Spawn(EnemyType.Saucer, null, false);
+				_saucerSpawnTimer = 0;
 			}
 		}
 	}
@@ -149,9 +166,11 @@ public class Game : MonoBehaviour
 		}
 
 		for (int i = 0; i < _asteroidsCount; i++)
-			_asteroidSpawner.Spawn(Enemies.AsteroidType.Small, null);
+			_asteroidSpawner.Spawn(EnemyType.LargeAsteroid, null, true);
 
 		_shipSpawner.Spawn();
+
+		_saucerSpawnTimer = 0f;
 	}
 
 	void LevelFinished()
@@ -182,14 +201,19 @@ public class Game : MonoBehaviour
 		}
 	}
 
-	void AsteroidDestroyed(AsteroidType asteroidType)
+	void AsteroidDestroyed(EnemyType asteroidType)
 	{
-		_scoreKeeper.AddScore(_scoreSheet.GetScore(asteroidType));
+		var score = _scoreSheet.GetScore(asteroidType);
+        _scoreKeeper.AddScore(score);
 
-		if (_scoreKeeper.GetScore() % _scorePerExtraLife  == 0)
+		_scoreToNextLife -= score;
+
+		if (_scoreToNextLife <= 0)
 		{
-			_playerLives++;
-			_playerLivesIndicator.SetLives(_playerLives);
-		}
+            _playerLives++;
+            _playerLivesIndicator.SetLives(_playerLives);
+
+			_scoreToNextLife += _scorePerExtraLife;
+        }
 	}
 }

@@ -12,4 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d843a197e53146948a53ff4e050db447, type: 3}
   m_Name: AsteroidsSheet
   m_EditorClassIdentifier: 
-  _asteroidTable: []
+  _asteroidTable:
+  - type: 1
+    score: 100
+  - type: 2
+    score: 50
+  - type: 3
+    score: 20
+  - type: 4
+    score: 100

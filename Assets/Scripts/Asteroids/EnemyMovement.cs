@@ -1,10 +1,9 @@
 using UnityEngine;
 using Utilities;
-using static UnityEditor.FilePathAttribute;
 
 namespace Enemies
 {
-    public class AsteroidMovement : MonoBehaviour
+    public class EnemyMovement : MonoBehaviour
     {
         [SerializeField] float _minSpeed;
         [SerializeField] float _maxSpeed;
@@ -21,8 +20,6 @@ namespace Enemies
 
             _direction = Random.insideUnitCircle.normalized;
             _speed = Random.Range(_minSpeed, _maxSpeed);
-
-            transform.rotation = Quaternion.LookRotation(Vector3.forward, _direction);
         }
 
         private void Update()

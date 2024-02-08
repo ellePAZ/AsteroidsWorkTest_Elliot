@@ -155,9 +155,9 @@ MonoBehaviour:
   _playerLivesIndicator: {fileID: 626381642}
   _gameStateUI: {fileID: 745549748}
   _scoreBoard: {fileID: 864019076}
-  _waveData:
-  - {fileID: 11400000, guid: 3776ab06dfd437e40b6dae97d74581c3, type: 2}
-  - {fileID: 11400000, guid: 76b3f072f50f17b41944b6eff18b0dca, type: 2}
+  _saucerPrefab: {fileID: 1954944581388568881, guid: 1fd4424ac95385f4dad7c9102c5dad86, type: 3}
+  _waveData: {fileID: 11400000, guid: 3776ab06dfd437e40b6dae97d74581c3, type: 2}
+  _scoreSheet: {fileID: 11400000, guid: ba6fc4619d7df514e9eec4bd74d9ba6c, type: 2}
   _nextRoundAction:
     m_Name: Next Round
     m_Type: 0

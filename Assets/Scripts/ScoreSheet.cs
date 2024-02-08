@@ -1,5 +1,4 @@
 using Enemies;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,13 +8,13 @@ public class ScoreSheet : ScriptableObject
     [System.Serializable]
     public class AsteroidScorePair
     {
-        public AsteroidType type;
+        public EnemyType type;
         public int score;
     }
 
     public List<AsteroidScorePair> _asteroidTable;
 
-    public int GetScore(AsteroidType type)
+    public int GetScore(EnemyType type)
     {
         int score = 0;
         for (int i = 0; i < _asteroidTable.Count; i++)

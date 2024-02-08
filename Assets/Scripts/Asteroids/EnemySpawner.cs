@@ -5,14 +5,15 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
+using UnityEngine.UIElements;
 
 namespace Spawning
 {
-    public class AsteroidSpawner : IAsteroidSpawner, IAddressableLoader
+    public class EnemySpawner : IEnemySpawner, IAddressableLoader
     {
         const byte MIN_SPAWN_POINT = 1;
         const byte BIG_ASTEROID_SPLIT_COUNT = 2;
-        const byte MEDIUM_ASTEROID_SPLIT_COUNT = 3;
+        const byte MEDIUM_ASTEROID_SPLIT_COUNT = 2;
 
         string _assetsLabel;
         int _noSpawnRadius;
@@ -21,25 +22,28 @@ namespace Spawning
         GameObject _smallAsteroidReference;
         GameObject _mediumAsteroidReference;
         GameObject _bigAsteroidReference;
+        GameObject _saucerReference;
 
-        byte _asteroidsCount;
+        HashSet<GameObject> _spawnedAsteroids;
+
+        // bool _saucerSpawned;
+        byte _enemiesCount;
 
         Action onAssetsLoaded;
         Action IAddressableLoader.OnAssetsLoaded { get => onAssetsLoaded; }
 
         Action onLevelFinished;
-        Action<AsteroidType> onAsteroidKilledCallback;
+        Action<EnemyType> onAsteroidKilledCallback;
 
-        HashSet<GameObject> _spawnedAsteroids;
-
-        public AsteroidSpawner(Action onLevelFinishedCallback, Action<AsteroidType> onAsteroidKilledCallback)
+        public EnemySpawner(Action onLevelFinishedCallback, Action<EnemyType> onAsteroidKilledCallback)
         {
             onLevelFinished = onLevelFinishedCallback;
             this.onAsteroidKilledCallback = onAsteroidKilledCallback;
 
-            _assetsLabel = "Asteroid";
+            _assetsLabel = "Enemy";
             _noSpawnRadius = 3;
-            _asteroidsCount = 0;
+            _enemiesCount = 0;
+            //_saucerSpawned = false;
 
             _spawnedAsteroids = new();
         }
@@ -67,14 +71,19 @@ namespace Spawning
 
             switch (asteroidHealth.AsteroidType)
             {
-                case AsteroidType.Small:
+                case EnemyType.SmallAsteroid:
                     _smallAsteroidReference = gameObject;
                     break;
-                case AsteroidType.Medium:
+                case EnemyType.MediumAsteroid:
                     _mediumAsteroidReference = gameObject;
                     break;
-                case AsteroidType.Large:
+                case EnemyType.LargeAsteroid:
                     _bigAsteroidReference = gameObject;
+                    break;
+                case EnemyType.Saucer:
+                    _saucerReference = gameObject;
+                    break;
+                default:
                     break;
             }
         }
@@ -87,50 +96,63 @@ namespace Spawning
                 Debug.LogError(handle.Result.ToString());
         }
 
-        public void Spawn(AsteroidType asteroidType, Vector3? position)
+        public void Spawn(EnemyType enemyType, Vector3? position, bool avoidMiddle)
         {
-            GameObject asteroidReference = null;
-            switch (asteroidType)
+            GameObject enemyReference = null;
+            switch (enemyType)
             {
-                case AsteroidType.Small:
-                    asteroidReference = _smallAsteroidReference;
+                case EnemyType.SmallAsteroid:
+                    enemyReference = _smallAsteroidReference;
                     break;
-                case AsteroidType.Medium:
-                    asteroidReference = _mediumAsteroidReference;
+                case EnemyType.MediumAsteroid:
+                    enemyReference = _mediumAsteroidReference;
                     break;
-                case AsteroidType.Large:
-                    asteroidReference = _bigAsteroidReference;
+                case EnemyType.LargeAsteroid:
+                    enemyReference = _bigAsteroidReference;
+                    break;
+                case EnemyType.Saucer:
+                    enemyReference = _saucerReference;
+                    //if (_saucerSpawned)
+                    //    return;
                     break;
             }
 
-            if (asteroidType == AsteroidType.Medium)
-                asteroidReference = _mediumAsteroidReference;
-            else if (asteroidType == AsteroidType.Small)
-                asteroidReference = _smallAsteroidReference;
-
-            if (asteroidReference != null)
+            if (enemyReference != null)
             {
-                var spawnPos = GetNewSpawnPosition(position);
+                var spawnPos = GetNewSpawnPosition(enemyType, position, avoidMiddle);
 
-                var asteroidObject = GameObject.Instantiate(asteroidReference, spawnPos, Quaternion.identity);
+                var asteroidObject = GameObject.Instantiate(enemyReference, spawnPos, Quaternion.identity);
                 var deathObservable = asteroidObject.GetComponent<IDeathObservable>();
                 Debug.Assert(deathObservable != null, "There is no death observable on the asteroid prefab, please fix");
 
                 deathObservable.Subscribe(UnSpawn);
                 _spawnedAsteroids.Add(asteroidObject);
 
-                _asteroidsCount++;
+                //if (enemyType == EnemyType.Saucer)
+                //    _saucerSpawned = true;
+
+                _enemiesCount++;
             }
         }
 
-        public Vector3 GetNewSpawnPosition(Vector3? position)
+        public Vector3 GetNewSpawnPosition(EnemyType enemyType, Vector3? position, bool avoidMiddle)
         {
+            Vector3 spawnPos = Vector3.zero;
             Camera camera = Camera.main;
 
-            Vector3 spawnPos = Vector3.zero;
-            if (position.HasValue)
+            if (enemyType != EnemyType.Saucer)
+                GetPositionInsideScreen(ref spawnPos, position, camera, avoidMiddle);
+            else
+                GetPositionOutsideScreen(ref spawnPos, camera);
+
+            return spawnPos;
+        }
+
+        void GetPositionInsideScreen(ref Vector3 spawnPos, Vector3? passedInPosition, Camera camera, bool avoidMiddle)
+        {
+            if (passedInPosition.HasValue)
             {
-                spawnPos = position.Value;
+                spawnPos = passedInPosition.Value;
             }
             else
             {
@@ -141,27 +163,41 @@ namespace Spawning
             // Add slight nudge to avoid position of (0,0,0)
             var nudge = new Vector3(0.001f, 0.001f, 0f);
             if (UnityEngine.Random.Range(0, 2) == 0)
-                nudge.x *= -1;
+                nudge.x *= -1f;
             if (UnityEngine.Random.Range(0, 2) == 0)
-                nudge.y *= -1;
+                nudge.y *= -1f;
 
             spawnPos += nudge;
+
             spawnPos.z = 0;
+
             Vector2 center = camera.ScreenToWorldPoint(new Vector2(camera.pixelWidth / 2, camera.pixelHeight / 2));
-            if (Vector2.Distance(center, spawnPos) < _noSpawnRadius)
+
+            if (avoidMiddle && Vector2.Distance(center, spawnPos) < _noSpawnRadius)
             {
                 Vector2 unitVector = spawnPos.normalized;
                 spawnPos = unitVector * _noSpawnRadius;
             }
+        }
 
-            return spawnPos;
+        public void GetPositionOutsideScreen(ref Vector3 spawnPos, Camera camera)
+        {
+            var randomPos = UnityEngine.Random.insideUnitCircle.normalized;
+            var worldMaxBounds = camera.ScreenToWorldPoint(new Vector2(camera.pixelWidth, camera.pixelHeight));
+            worldMaxBounds.z = 0;
+            var scalar = worldMaxBounds.magnitude;
+            randomPos *= scalar;
+
+            spawnPos = randomPos;
+
+            spawnPos.z = 0;
         }
 
         public void UnSpawn(object context)
         {
-            Debug.Assert(_asteroidsCount > 0, "You are trying to destroy an asteroid that doesn't exist");
+            Debug.Assert(_enemiesCount > 0, "You are trying to destroy an asteroid that doesn't exist");
 
-            _asteroidsCount--;
+            _enemiesCount--;
 
             if (context == null)
                 return;
@@ -170,20 +206,25 @@ namespace Spawning
             if (asteroidHealth == null)
                 return;
 
-            AsteroidType asteroidType = asteroidHealth.AsteroidType;
+            EnemyType asteroidType = asteroidHealth.AsteroidType;
 
-            if (asteroidType != AsteroidType.Small)
+            // Process spawning details
+            if (asteroidType != EnemyType.SmallAsteroid)
             {
                 var asteroidPosition = asteroidHealth.gameObject.transform.position;
-                if (asteroidType == AsteroidType.Large)
+                if (asteroidType == EnemyType.LargeAsteroid)
                     for (byte i = 0; i < BIG_ASTEROID_SPLIT_COUNT; i++)
-                        Spawn(AsteroidType.Medium, asteroidPosition);
+                        Spawn(EnemyType.MediumAsteroid, asteroidPosition, false);
 
-                if (asteroidType == AsteroidType.Medium)
+                if (asteroidType == EnemyType.MediumAsteroid)
                     for (byte i = 0; i < MEDIUM_ASTEROID_SPLIT_COUNT; i++)
-                        Spawn(AsteroidType.Small, asteroidPosition);
+                        Spawn(EnemyType.SmallAsteroid, asteroidPosition, false);
+
+                //if (asteroidType == EnemyType.Saucer)
+                //    _saucerSpawned = false;
             }
 
+            // Destroy enemy
             var asteroidGameObject = asteroidHealth.gameObject;
             Debug.Assert(_spawnedAsteroids.Contains(asteroidGameObject), "_spawnedAsteroids doesn't contain this asteroid, something is wrong");
 
@@ -192,7 +233,7 @@ namespace Spawning
 
             onAsteroidKilledCallback?.Invoke(asteroidType);
 
-            if (_asteroidsCount == 0)
+            if (_enemiesCount == 0)
                 onLevelFinished?.Invoke();
         }
     }

@@ -24,22 +24,28 @@ MonoBehaviour:
     - default
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: fa897f63a5df33a4cbbfc8e62532bbab
-    m_Address: Assets/Prefabs/Asteroids/MediumAsteroid.prefab
+    m_Address: Assets/Prefabs/Enemies/MediumAsteroid.prefab
     m_ReadOnly: 0
     m_SerializedLabels:
-    - Asteroid
+    - Enemy
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2face69de67c4a74f95cc62cf72e70a5
-    m_Address: Assets/Prefabs/Asteroids/SmallAsteroid.prefab
+    m_Address: Assets/Prefabs/Enemies/SmallAsteroid.prefab
     m_ReadOnly: 0
     m_SerializedLabels:
-    - Asteroid
+    - Enemy
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b992f5e6403529f488625223d1aad685
-    m_Address: Assets/Prefabs/Asteroids/BigAsteroid.prefab
+    m_Address: Assets/Prefabs/Enemies/BigAsteroid.prefab
     m_ReadOnly: 0
     m_SerializedLabels:
-    - Asteroid
+    - Enemy
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1fd4424ac95385f4dad7c9102c5dad86
+    m_Address: Assets/Prefabs/Enemies/Saucer.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Enemy
     FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: f7511999fa563c147b839ea8b3f1204f, type: 2}
