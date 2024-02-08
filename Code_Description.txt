@@ -1,9 +1,9 @@
 The code follows a fairly standard structure where the Game class controls the flow of the game, and passing on information that the UI needs. 
 Under game we have two spawners, dealing with spawning enemies and the player when needed.
-Then we have enemies, and the player objects.
+Then we have enemies, and the player objects, which have various components like movement and shooting scripts.
 
 The biggest challenges that I faced had mostly to do with dependencies between scripts, as I tried to keep it in line with the SOLID principles. I think
 that I managed quite well though in the end, as I tried a approach of using callbacks to communicate between scripts to avoid spaghetti.
 
 All in all I think that I managed to get in most of the features that I wanted, but if I had more time I think that I would split the enemy spawners to
-separate classes, and split the game class to smaller parts.
+separate classes, and split the game class into smaller parts.
