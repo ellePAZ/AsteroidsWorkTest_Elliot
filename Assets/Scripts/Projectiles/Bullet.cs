@@ -15,6 +15,7 @@ public class Bullet : MonoBehaviour
     {
         Invoke("TimedOut", _lifeTime);
         MovementUtilities.GetMinMaxBounds(out _minBounds, out _maxBounds);
+        Debug.Log("Bullet speed = " + _velocity);
     }
 
     // Update is called once per frame
