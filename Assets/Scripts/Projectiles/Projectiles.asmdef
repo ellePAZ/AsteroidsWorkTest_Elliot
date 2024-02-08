@@ -1,12 +1,9 @@
 {
-    "name": "Asteroids",
+    "name": "Projectiles",
     "rootNamespace": "",
     "references": [
         "GUID:562875fd399662c4f9430b71a9eb2592",
-        "GUID:9e24947de15b9834991c9d8411ea37cf",
-        "GUID:84651a3751eca9349aac36a66bba901b",
-        "GUID:02920db511d253544b197ed0a8d658f9",
-        "GUID:0eead11056c043940a4b830dcedd571e"
+        "GUID:02920db511d253544b197ed0a8d658f9"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
